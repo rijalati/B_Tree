@@ -23,24 +23,24 @@ typedef struct tnode{
     unsigned char sector[JDISK_SECTOR_SIZE];                    /* The sector */
     unsigned char nkeys;                                        /* Number of keys currently in node/sector */
     unsigned char flush;                                        /* Flush this node to disk? */
-    unsigned char internal;                                        /* 1 if node/sector internal, zero otherwise */
-    unsigned int lba;                                            /* This sector/nodes "logical block address" */
-    unsigned char **keys;                                        /* Node's keys */
-    unsigned int *lbas;                                            /* Node's vals, pointers to other blocks */
-    struct tnode *parent;                                        /* Node's parent, used during splits */
+    unsigned char internal;                                     /* 1 if node/sector internal, zero otherwise */
+    unsigned int lba;                                           /* This sector/nodes "logical block address" */
+    unsigned char **keys;                                       /* Node's keys */
+    unsigned int *lbas;                                         /* Node's vals, pointers to other blocks */
+    struct tnode *parent;                                       /* Node's parent, used during splits */
 } TreeNode;
 
 /* ================================================================================= */
 /* This struct represents the tree */
 typedef struct{
-    int key_size;                            /* Byte size of keys in the tree */
-    unsigned int root_lba;                    /* The Logical block address of the root node */
-    unsigned long first_free_block;            /* Logical block address of first free sector */
-    void *disk;                                /* the jdisk */
-    unsigned long size;                        /* size of jdisk */
-    unsigned long num_lbas;                    /* size/JDISK_SECTOR_SIZE */
-    int MAXKEY;                                /* keys_per_block */
-    int MAXVALS;                            /* lbas_per_block */
+    int key_size;                               /* Byte size of keys in the tree */
+    unsigned int root_lba;                      /* The Logical block address of the root node */
+    unsigned long first_free_block;             /* Logical block address of first free sector */
+    void *disk;                                 /* the jdisk */
+    unsigned long size;                         /* size of jdisk */
+    unsigned long num_lbas;                     /* size/JDISK_SECTOR_SIZE */
+    int MAXKEY;                                 /* keys_per_block */
+    int MAXVALS;                                /* lbas_per_block */
 }    B_Tree;
 
 /* ================================================================================= */
@@ -177,8 +177,8 @@ void *b_tree_create(char *filename, long size, int key_size){
 /* ================================================================================= */
 /* This function attaches to the jdisk file "filename" and returns its B_Tree struct. */
 void *b_tree_attach(char *filename){
-    B_Tree *tree;                            /* The B_Tree for jdisk filename */
-    void *buf;                                /* A buffer for reading sector 0 from jdisk */    
+    B_Tree *tree;                           /* The B_Tree for jdisk filename */
+    void *buf;                              /* A buffer for reading sector 0 from jdisk */    
     
     /* Allocate memory for tree and a buffer for reading from sector 0 */
     tree = (B_Tree *) malloc(sizeof(B_Tree));
@@ -201,9 +201,9 @@ void *b_tree_attach(char *filename){
 /* ================================================================================= */
 /* This function loads info into a TreeNode from a logical block address in a jdisk file. */
 TreeNode *load_sector(B_Tree *b_tree, unsigned int lba){
-    TreeNode *node;                        /* The new TreeNode */
-    void *buf;                            /* A buffer for reading from sector/lba */
-    int i;                                /* Arbitrary iteration variable */
+    TreeNode *node;                     /* The new TreeNode */
+    void *buf;                          /* A buffer for reading from sector/lba */
+    int i;                              /* Arbitrary iteration variable */
 
     /* Allocate memory for buffer and node (and temporary variables) */
     node = (TreeNode *) malloc(sizeof(TreeNode));
@@ -254,13 +254,13 @@ void free_node(TreeNode *node, B_Tree *b_tree){
 
 /* ================================================================================= */
 void add_key_val(B_Tree *b_tree, TreeNode *node, void *key, int lba){
-    int i;                                /* Arbitrary iteration variable */
-    int j;                                /* Arbitrary iteration variable */
+    int i;                              /* Arbitrary iteration variable */
+    int j;                              /* Arbitrary iteration variable */
     int insertion_index;                /* Position we will be insertin key/val */
-    unsigned char **key_array;            /* For determining median node during a split */
+    unsigned char **key_array;          /* For determining median node during a split */
     unsigned int *lba_array;            /* For determining lbas during a split */
     TreeNode *right;                    /* Right node during a split */
-    TreeNode *new_root;                    /* For splitting the root node */    
+    TreeNode *new_root;                 /* For splitting the root node */    
 
     /* Is the node we are trying to insert into full? */
     if (node->nkeys == b_tree->MAXKEY){ /* We need to split */
@@ -410,11 +410,11 @@ void add_key_val(B_Tree *b_tree, TreeNode *node, void *key, int lba){
 /* ================================================================================= */
 /* This function gets the lba of the value of a key in an internal node. */
 unsigned int get_internal_val(B_Tree *b_tree, unsigned int lba){
-    TreeNode *node;                /* The current node in the tree */
-    TreeNode *prev;                /* Previous node in the traversal */
-    int internal                /* Is the current node internal? */;
-    int i;                        /* Arbitrary iteration variable */
-    int return_lba;                /* lba of new node on path to val */
+    TreeNode *node;                 /* The current node in the tree */
+    TreeNode *prev;                 /* Previous node in the traversal */
+    int internal;                   /* Is the current node internal? */
+    int i;                          /* Arbitrary iteration variable */
+    int return_lba;                 /* lba of new node on path to val */
 
     node = NULL;
     prev = NULL;
@@ -448,11 +448,11 @@ void print_node(TreeNode *node){
 /* ================================================================================= */
 /* This function uses a BFS to print the contents of the B_Tree. */
 void b_tree_print_tree(void *b_tree){
-    int i;                                /* Arbitrary iteration variable */    
-    tn_queue *Tree_Queue;                /* A queue of TreeNodes */
-    queue_node *qn;                        /* A node in the TreeNode queue */
-    TreeNode *tn;                        /* An arbitrary node in the TreeNode queue */
-    TreeNode *tn_child;                    /* Child of a node in the TreeNode queue */
+    int i;                              /* Arbitrary iteration variable */    
+    tn_queue *Tree_Queue;               /* A queue of TreeNodes */
+    queue_node *qn;                     /* A node in the TreeNode queue */
+    TreeNode *tn;                       /* An arbitrary node in the TreeNode queue */
+    TreeNode *tn_child;                 /* Child of a node in the TreeNode queue */
 
     /* Allocate and initialize Tree_Queue */
     Tree_Queue = (tn_queue *) malloc(sizeof(tn_queue));
@@ -496,10 +496,10 @@ void b_tree_print_tree(void *b_tree){
    (or returns the lba of key if key is already in the tree) to insert into, and then calls
    add_key_val to perform the insertion. */
 unsigned int b_tree_insert(void *b_tree, void *key, void *record){
-    int i;                                        /* Arbitrary iteration variable */
-    TreeNode *node;                                /* Node currently being processed */
-    TreeNode *prev;                                /* current_node's parent */
-    unsigned long lba;                            /* lba of key, to be returned */
+    int i;                                      /* Arbitrary iteration variable */
+    TreeNode *node;                             /* Node currently being processed */
+    TreeNode *prev;                             /* current_node's parent */
+    unsigned long lba;                          /* lba of key, to be returned */
 
     /* Make sure node's in tree are large enough to store key/val pairs. */
     if (((B_Tree *) b_tree)->first_free_block >= ((B_Tree *) b_tree)->size / JDISK_SECTOR_SIZE) return 0;
@@ -572,10 +572,10 @@ unsigned int b_tree_insert(void *b_tree, void *key, void *record){
 /* This function returns the lba of a key in the B_Tree. If the key does not exist, it
    returns 0. */
 unsigned int b_tree_find(void *b_tree, void *key){    
-    int i;                                /* Arbitrary iteration variable */
-    int val;                            /* Lba to be returned */
-    TreeNode *node;                        /* For traversing the tree */
-    TreeNode *prev;                        /* Previous node in our search path. For memory management. */
+    int i;                          /* Arbitrary iteration variable */
+    int val;                        /* Lba to be returned */
+    TreeNode *node;                 /* For traversing the tree */
+    TreeNode *prev;                 /* Previous node in our search path. For memory management. */
 
     /* Load root node and set internal to be true. Begin search of b_tree. */
     node = load_sector((B_Tree *) b_tree, ((B_Tree *) b_tree)->root_lba);
