@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include "jdisk.h"
+#include "b_tree.h"
 
 /* ================================================================================= */
 /* This struct represents a node in the tree */
