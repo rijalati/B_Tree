@@ -2,21 +2,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "b_tree.h"
 
+/* This function generates and returns a random phone number,*/
+/*   in the format (555)-xxx-xxxx .                          */
 char *generate_phone_number();
+
+/* ========================================================= */
+/*                  BEGINNING OF MAIN                        */
+/* ========================================================= */
 
 int main(int argc, char **argv){
     int i;                      /* Arbitrary iteration variable */
     int line_count;             /* Number of lines in file */
     int name_index;             /* Index into first and last name arrays */
     char *buf;                  /* Buffer for file input */
+    char *key_buf;              /* Buffer for inserting keys into b_tree */
+    char *rec_buf;              /* Buffer for inserting records into b_tree */
     char fname[100];            /* Buffer for grabbing first names */
     char lname[100];            /* Buffer for grabbing last names */
     char **first_names;         /* Array that stores first names */
     char **last_names;          /* Array that stores last names */
+    void *b_tree;               /* Handle for b_tree */
     size_t BUFSIZE;             /* Size of input buffer (*buf) */
     FILE *fin;                  /* Input file structure */
     
+    /* Error check execution specification */
+    if (argc != 3){
+        printf("Usage: ./example_creation input_file output_file\n");
+        exit(1);
+    }
+
     /* Create 1K buffer for file input */
     BUFSIZE = 1024;
     buf = (char *) malloc(sizeof(char) * BUFSIZE);
@@ -45,18 +61,42 @@ int main(int argc, char **argv){
         last_names[name_index] = strdup(lname);
         name_index++;
     }
-    
+   
+    /* Seed random number generator */
     srand(time(NULL));
+
+    /* Allocate buffers for keys and records and initialize b_tree */
+    key_buf = (char *) malloc(sizeof(char) * BUFSIZE);
+    rec_buf = (char *) malloc(sizeof(char) * BUFSIZE);
+    b_tree = b_tree_create(argv[2], (line_count * 2) * BUFSIZE, 50);
     
+    /* Generate random names and phone numbers, store them in key_buf and
+        rec_buf, respectively. Insert into b_tree, also print them to check. */
     for (i = 0; i < line_count; i++){
-        printf("INSERT %s %c. %s %s\n", first_names[rand() % line_count],
-            65 + (rand() % 26), last_names[rand() % line_count], 
-            generate_phone_number());
+        /* Create key (format: "firstname middle_intial. lastname") */
+        strcpy(key_buf, first_names[rand () % line_count]);
+        strcat(key_buf, " ");
+        key_buf[strlen(key_buf) + 2] = '\0';
+        key_buf[strlen(key_buf) + 1] = '.';
+        key_buf[strlen(key_buf)] = 65 + (rand() % 26);
+        strcat(key_buf, " ");
+        strcat(key_buf, last_names[rand() % line_count]);
+        
+        /* Create record by generating random phone number */
+        strcpy(rec_buf, generate_phone_number());
+        
+        /* Insert into b_tree and print to stdout to check */
+        b_tree_insert(b_tree, key_buf, rec_buf);
+        printf("INSERT %s %s\n", key_buf, rec_buf);
     }
 
     return 0;
 }
 
+/* ========================================================= */
+/* This function generates and return a random phone number, */
+/* in the format "(555)-xxx-xxxx".                           */
+/* ========================================================= */
 char *generate_phone_number(){
     int i;      /* Arbitrary iteration variable */  
     char *pn;   /* Phone number: (555)-123-4567 */
