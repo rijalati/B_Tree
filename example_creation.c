@@ -26,10 +26,11 @@ int main(int argc, char **argv){
     void *b_tree;               /* Handle for b_tree */
     size_t BUFSIZE;             /* Size of input buffer (*buf) */
     FILE *fin;                  /* Input file structure */
+    FILE *fout;                 /* Output file structure */
     
     /* Error check execution specification */
-    if (argc != 3){
-        printf("Usage: ./example_creation input_file output_file\n");
+    if (argc != 4){
+        printf("Usage: ./example_creation input_file b_tree_file output_file\n");
         exit(1);
     }
 
@@ -65,10 +66,12 @@ int main(int argc, char **argv){
     /* Seed random number generator */
     srand(time(NULL));
 
-    /* Allocate buffers for keys and records and initialize b_tree */
+    /* Allocate buffers for keys and records, initialize b_tree and 
+        open output file */
     key_buf = (char *) malloc(sizeof(char) * BUFSIZE);
     rec_buf = (char *) malloc(sizeof(char) * BUFSIZE);
     b_tree = b_tree_create(argv[2], (line_count * 2) * BUFSIZE, 50);
+    fout = fopen(argv[3], "w");
     
     /* Generate random names and phone numbers, store them in key_buf and
         rec_buf, respectively. Insert into b_tree, also print them to check. */
@@ -85,9 +88,9 @@ int main(int argc, char **argv){
         /* Create record by generating random phone number */
         strcpy(rec_buf, generate_phone_number());
         
-        /* Insert into b_tree and print to stdout to check */
+        /* Insert into b_tree and print to output file */
         b_tree_insert(b_tree, key_buf, rec_buf);
-        printf("INSERT %s %s\n", key_buf, rec_buf);
+        fprintf(fout, "INSERT %s %s\n", key_buf, rec_buf);
     }
 
     return 0;
