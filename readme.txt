@@ -1,14 +1,19 @@
 **Note**: The code in b_tree.h, jdisk.h, and jdisk.c was written by Dr. James Plank of the 
 University of Tennessee. The code in b_tree.c, example_creation.c, and example_tester.c is my 
-own. 
+own. Also note that deletions are not implemented in my b_tree, only insertions.
 
 This repository contains the source code for a simple B+ Tree that is implemented on top of 
 a Unix/Linux filesystem and is capable of functioning as a simple Database Management System. 
 This was a project I did my senior year of college for Dr. Plank's Advanced Programming and 
-Algorithms course at UTK. 
+Algorithms course at UTK. More information on the project and its specifications can be found
+at: web.eecs.utk.edu/~plank/plank/classes/cs494/494/labs/Lab-1-Btree/
+
+General information on B+ Trees can be found at: 
+cis.stvincent.edu/html/tutorials/swd/btree/btree.html
 
 The functions declared in b_tree.h define an interface for a B+ Tree ("b_tree") that is 
-implemented on top of a Unix/Linux filesystem. In my B+ Tree implementation, the val for a key
+implemented on top of a Unix/Linux filesystem. The file jdisk.h exports a disk-like interface
+on top of standard Nix files. Also note that in my B+ Tree implementation, the val for a key
 in an internal node is held in the largest val pointer of the key's predecessor subtree.
 
 The b_tree itself is stored in a file which is divided into sectors of JDISK_SECTOR_SIZE bytes. 
@@ -40,7 +45,7 @@ logical block address of the sector containing the value for the key is returned
 key does not exist in the tree, then 0 is returned. 
 
 The function takes a handle to a b_tree as an argument and void *b_tree_disk(void *b_tree) 
-returns the jdisk pointer for the b_tree (jdisks explained later). 
+returns the jdisk pointer for the b_tree. 
 
 The function int b_tree_key_size(void *b_tree) takes a handle to a b_tree as an argument and
 returns the key size for that b_tree. 
@@ -86,7 +91,7 @@ character). For example, supposed you previously used strcpy() to copy a string
 to a 40 char buffer you are using to perform insertions/lookups on your b_tree.
 Say you previously inserted "Yankee Doodle". If "Yankee Doodle" is the first 
 value you've strcpy()'d to your buffer, and all the bytes in your buffer were
-initially set to NULL, then your buffer would look like this:
+initially set to the NULL character, then your buffer would look like this:
 "Yankee Doodle\0\0\0\0\0.......\0". If you then insert into the tree, no problem.
 But now say you strcpy() "Bugs Bunny" to your buffer. Now your buffer looks like this:
 "Bugs Bunny\0le\o\0\0\0......\0". You might insert this into the tree, and then later
@@ -97,4 +102,32 @@ bytes in keys and vals to the NULL character when performing insertions and look
 I have included two example programs, example_creation.c and example_tester.c that
 illustrate how one might embed b_tree functions in other C programs and use them 
 to create/attach to b_tree files, and use them to store data that is meant to be 
-interpreted as strings. 
+interpreted as strings. The file names.txt contains a list of names of 100 famous
+celebrities, musicians, scientists, t.v. characters, movie characters, etc... that
+have been scrambled. The program example_creation.c takes the name of this file 
+as a command line argument, as well as the name of a new b_tree file, and the name
+of an output file. The program first creates a b_tree, which will be stored in 
+a file with the name specified by the command line argument, and then generates 
+100 fake names by combinging random first and last names from the names.txt 
+file (in addition to a randomly generated middle initial, e.g. "A."), and also 
+randomly generates fake phone number for each name. Each fake fullname and phone 
+number for a key-val pair for insertion into the specified b_tree file. For example, 
+say the name "Luke A.  Vader" was generated with the phone number "(555)-123-4567". 
+Then ("Luke A.  Vader", "(555)-123-4567") form a key value pair and are inserted 
+into the b_tree file. The program prints each insertion to the output file in the form: 
+INSERT "Fullname". The file insertions.txt is an example of such a file, generated
+by example_creation.c. The file phone_data.db is an example of a b_tree file formed
+by inserting the names from insertions.txt into phone_data.db with randomly generated
+phone numbers.
+
+The program example_tester.c takes three command line arguments. The first is the
+name of the "names file", (names.txt). The second is the name of the file containing
+the insertion statements from an instance of example_creation.c (the "output file" 
+from example_creation.c). The third is the name of the b_tree file that was created
+in example_creation.c. The program example_tester.c then randomly does one of the 
+two following things: It either generates a random name not contained in the insertions.txt
+file and searches for it in the tree (it shouldn't be in there), or tries to find 
+a name from the insertions.txt file in the tree (which should be in there), and then
+prints its val.
+
+I have included a makefile for building example_creation.c and example_tester.c
