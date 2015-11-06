@@ -14,10 +14,10 @@ in an internal node is held in the largest val pointer of the key's predecessor 
 The b_tree itself is stored in a file which is divided into sectors of JDISK_SECTOR_SIZE bytes. 
 In my case, that is sectors of 1024 (1K) bytes. Each sector can be referred to by its 
 "Logical Block Address", and sectors are labeled consecutively. For example, the first 
-0 - 1023 bytes of the file correspond to the first sector, which has an lba ("Logical 
-Block Address of 0). The next 1024 - 2047 bytes in the file correspond to the second 
-sector, which has an lba of 1. The next 2048 - 3071 bytes of the file correspond to 
-the third sector, which has an lba of 2, etc..
+0 - 1023 bytes of the file correspond to sector zero, which has an LBA ("Logical 
+Block Address of 0). The next 1024 - 2047 bytes in the file correspond to the sector
+one, which has an LBA of 1. The next 2048 - 3071 bytes of the file correspond to 
+sector two, which has an LBA of 2, etc..
 
 The function void *b_tree_create(char *filename, long size, int key_size) allows you to create 
 a b_tree. It takes the desired name of the b_tree file, its size, and key size as arguments. The 
@@ -48,4 +48,53 @@ returns the key size for that b_tree.
 The function void b_tree_print_tree(void *b_tree) takes a handle to a b_tree as an argument
 and prints the tree to stdout in a BFS fashion.
 
+The structure for a b_tree file is defined as follows: The first sector (sector zero) is 
+dedicated to storing information about the b_tree. The first 0-3 bytes of sector zero store
+the key size of the b_tree as an integer. Bytes 4-7 of sector zero store the logical block
+address (LBA) of the sector that stores the root node of the b_tree. Bytes 8-15 (or 8-11, 
+if longs are 4 bytes) of sector zero store the LBA of the first "free sector" (i.e., the 
+first sector that is not yet storing any data). All other sectors in the b_tree file may 
+store internal nodes of the tree, external nodes of the tree, or a record for a given key
+in the b_tree. 
 
+The format of a sector storing a node in the b_tree is defined as follows: The first byte
+is either a 0 or a 1, determining whether the node is external (0) or internal (1). The 
+next byte tells you how many keys are in the node. The number of keys that can fit in a node
+is (JDISK_SECTOR_SIZE - 6) / (key_size + 4). The key_size for a b_tree must be between 4 
+and 254 bytes. So even if keys are 4 bytes long, the number of keys that can fit in a node
+can be represented by an unsigned char. 
+
+If we define MAXKEY to be (JDISK_SECTOR_SIZE - 6) / (key_size + 4), then the next 
+MAXKEY * key_size bytes in a node sector are the keys for that node. The last 
+(MAXKEY + 1) * 4 bytes are the LBA's, which are the pointers of the b_tree. If the 
+node is internal, then the LBA's are LBA's of other sectors containing other 
+nodes of the b_tree, but if the node is external then the LBA's are LBA's of 
+sectors containing records/vals for keys in the b_tree. Note that if there are 
+nkeys in a node, then there are (nkeys + 1) LBA's.
+
+Note that all data written to and read from the b_tree is written/read as raw bytes.
+This means that if the keys and records that are being inserted/searched for in the 
+b_tree are meant to be interpreted as strings, then there is something that should
+be kept in mind.
+
+Excess bytes contained in keys and records must be handled in some way. For 
+example, if your b_tree has a key_size of 40 bytes, and you wish to insert the 
+key "Bugs Bunny", then your data really only requires 10 or 11 bytes (the 
+length of "Bugs Bunny" + an optional NULL character). A way of dealing with 
+the excess bytes should be devised (they should probably be set to the NULL 
+character). For example, supposed you previously used strcpy() to copy a string 
+to a 40 char buffer you are using to perform insertions/lookups on your b_tree.
+Say you previously inserted "Yankee Doodle". If "Yankee Doodle" is the first 
+value you've strcpy()'d to your buffer, and all the bytes in your buffer were
+initially set to NULL, then your buffer would look like this:
+"Yankee Doodle\0\0\0\0\0.......\0". If you then insert into the tree, no problem.
+But now say you strcpy() "Bugs Bunny" to your buffer. Now your buffer looks like this:
+"Bugs Bunny\0le\o\0\0\0......\0". You might insert this into the tree, and then later
+lookup "Bugs Bunny\0\0\0.....\0" in the tree, expecting it to be there, but it would
+not be. This is a subtle bug to keep in mind. The safest thing to do is set excess 
+bytes in keys and vals to the NULL character when performing insertions and lookups.
+
+I have included two example programs, example_creation.c and example_tester.c that
+illustrate how one might embed b_tree functions in other C programs and use them 
+to create/attach to b_tree files, and use them to store data that is meant to be 
+interpreted as strings. 
